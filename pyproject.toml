@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "label-change-tool"
+version = "0.1.0"
+description = "标注转换工具"
+authors = ["极客小方 <GeekFong@hotmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
