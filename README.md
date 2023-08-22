@@ -4,7 +4,7 @@
 
   <span style="margin: 0 8px;">
     <a href="https://github.com/GeekFong/Label_Change_Tool">
-      <img src="https://badgen.net/badge/Label_Change_Tool/v0.1/green" alt="Label_Change_Tool">
+      <img src="https://badgen.net/badge/Label_Change_Tool/v1.0/green" alt="Label_Change_Tool">
     </a>
   </span>
 
@@ -34,4 +34,16 @@
   </span>
 
 </div>
+
+## **内容列表**
+- [**内容列表**](#内容列表)
+- [**简介**](#简介)
+
+
+## **简介**
+Label_Change_Tool这个工具主要支持一下几种标注格式的相互转换：
+
+-  yolo的txt格式
+-  Pascal VOC的xml格式转换
+-  [标注精灵](http://www.jinglingbiaozhu.com/)的xml格式转换（这是我经常使用的标注工具）
 

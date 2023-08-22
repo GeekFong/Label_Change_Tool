@@ -7,6 +7,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
+pyqt5 = "^5.15.9"
+qt-material = "^2.14"
+pillow = "^10.0.0"
 
 
 [build-system]
