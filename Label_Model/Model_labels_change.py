@@ -38,7 +38,7 @@ class Model:
             0:"信息正确",
             -1:"选择的标签相同,请更换标签",
             -2:"缺少分类名",
-            -3:"图片和转换标签数目不相同,请先校验再进行转换",
+            -3:"路径错误或图片和转换标签数目不相同,请先校验再进行转换",
             -4:"图片或标签文件没任何数据，请检查",
             -5:"要转换的标签和你文件夹中的标签不一致"
         }
@@ -126,7 +126,11 @@ class Model:
         return self.count_files_in_folder(self.wrong_files)
 
     #检查文件数目是否相同
-    def compare_folder_files(self,folder1, folder2):
+    def compare_folder_files(self, folder1, folder2):
+        # 验证传入的路径是否为有效路径
+        if not (os.path.exists(folder1) and os.path.exists(folder2)):
+            return -1  # 返回-1表示路径无效
+
         # 获取文件夹1中的文件列表
         files1 = os.listdir(folder1)
         num_files1 = len(files1)

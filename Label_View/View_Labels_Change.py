@@ -119,9 +119,9 @@ class Ui_Label_Change_Tool_window(object):
         self.jy_pushButton = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
         self.jy_pushButton.setObjectName("jy_pushButton")
         self.horizontalLayout_2.addWidget(self.jy_pushButton)
-        self.pushButton_3 = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
-        self.pushButton_3.setObjectName("pushButton_3")
-        self.horizontalLayout_2.addWidget(self.pushButton_3)
+        self.zh_pushButton = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
+        self.zh_pushButton.setObjectName("zh_pushButton")
+        self.horizontalLayout_2.addWidget(self.zh_pushButton)
         self.all_verticalLayout.addLayout(self.horizontalLayout_2)
         Label_Change_Tool_window.setCentralWidget(self.centralwidget)
 
@@ -142,4 +142,4 @@ class Ui_Label_Change_Tool_window(object):
         self.after_comboBox.setItemText(2, _translate("Label_Change_Tool_window", "精灵标注助手-xml"))
         self.after_label_pushButton.setText(_translate("Label_Change_Tool_window", "选择输出标签路径"))
         self.jy_pushButton.setText(_translate("Label_Change_Tool_window", "校验"))
-        self.pushButton_3.setText(_translate("Label_Change_Tool_window", "转换"))
+        self.zh_pushButton.setText(_translate("Label_Change_Tool_window", "转换"))

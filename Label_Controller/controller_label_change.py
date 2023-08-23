@@ -17,40 +17,16 @@ class ChangeLabel_Thread(QThread):
         while True:
             
             if self.CGl_model.thread_flag == 1:
-                #self.CGl_view.button4.setDisabled(True)
-                if self.CGl_view.lineEdit2.text() == '':
-                    self.CGl_view.lineEdit2.setText("可不选择转化后文件夹")
-
-
-                selected_option1 = self.CGl_view.combo1.currentText() #转换前的标签
-                selected_option2 = self.CGl_view.combo2.currentText() #转换前的标签
-
-                # # 1. 检测所有参数是否正确
-                rtv = self.CGl_model.check_info_label(selected_option1, selected_option2, self.CGl_view.label_text.text(),self.CGl_view.lineEdit_image.text(), self.CGl_view.lineEdit1.text())
-                if rtv < 0:
-                    QtWidgets.QMessageBox.warning(None, "警告", self.CGl_model.error_messages[rtv])
-                    self.CGl_model.thread_flag = 0
-                    self.CGl_view.button4.setEnabled(True)
-                    self.CGl_model.jdt_flag = 0
-                    continue
-
-                my_dict = { 'class_type': self.CGl_view.label_text.text(), 
-                            'combo1': selected_option1, 
-                            'combo2': selected_option2,
-                            'label_1': self.CGl_view.lineEdit1.text(),
-                            'label_2': self.CGl_view.lineEdit2.text(),
-                            'label_3': self.CGl_view.lineEdit_image.text(),
-                        }
-
-                # 2. 记录所有值
-                self.CGl_model.Write_Record_Pyqt_info(str(my_dict))
 
                 #传入标签名，和图片路径，和转换路径和class
-                rtv = self.CGl_model.change_label(selected_option1, selected_option2, self.CGl_view.label_text.text().split(","),self.CGl_view.lineEdit_image.text(), self.CGl_view.lineEdit1.text(), self.CGl_view.lineEdit2.text())
+                rtv = self.CGl_model.change_label(self.contrl.controls_view_value["before_comboBox"], self.contrl.controls_view_value["after_comboBox"],
+                        self.contrl.controls_view_value["labelname_lineEdit"].split(","), self.contrl.controls_view_value["before_pic_lineEdit"], 
+                        self.contrl.controls_view_value["before_label_lineEdit"], self.contrl.controls_view_value["after_label_lineEdit"])
                 #print(rtv)
                 if rtv is None:
+                    self.CGl_model.thread_flag = 2
                     QtWidgets.QMessageBox.warning(None, "警告", "未知错误")
-                #self.CGl_view.button4.setEnabled(True)
+
 
                 self.CGl_model.thread_flag = 2
 
@@ -86,6 +62,8 @@ class JDT_Thread(QThread):
                 
             time.sleep(1)
 
+
+
 # 创建控制器
 class Controller:
     def __init__(self, model, view):
@@ -96,6 +74,41 @@ class Controller:
 
         self.setSlot()
 
+
+        self.controls_view = {
+            "labelname_lineEdit": self.view.labelname_lineEdit.text(),
+            "before_comboBox": self.view.before_comboBox.currentText(),
+            "after_comboBox": self.view.after_comboBox.currentText(),
+            "before_label_lineEdit": self.view.before_label_lineEdit.text(),
+            "before_pic_lineEdit": self.view.before_pic_lineEdit.text(),
+            "after_label_lineEdit": self.view.after_label_lineEdit.text()
+        }
+
+        self.controls_view_alia = {
+            "labelname_lineEdit": "类别标签为空",
+            "before_comboBox": "转换标签为空",
+            "after_comboBox": "转换标签为空",
+            "before_label_lineEdit": "转换标签路径为空",
+            "before_pic_lineEdit": "转换图片路径为空",
+            "after_label_lineEdit": "转换后图片路径为空"
+        }
+
+
+        self.controls_view_value = {}  #最新的数据
+
+
+    def update_controls_view(self):
+                # 获取各个控件的值并赋给字典
+        self.controls_view_value["labelname_lineEdit"] = self.view.labelname_lineEdit.text()
+        self.controls_view_value["before_comboBox"] = self.view.before_comboBox.currentText()
+        self.controls_view_value["after_comboBox"] = self.view.after_comboBox.currentText()
+        self.controls_view_value["before_label_lineEdit"] = self.view.before_label_lineEdit.text()
+        self.controls_view_value["before_pic_lineEdit"] = self.view.before_pic_lineEdit.text()
+        self.controls_view_value["after_label_lineEdit"] = self.view.after_label_lineEdit.text()
+
+        return self.controls_view_value
+
+
     def setSlot(self):
         # 绑定选择文件夹槽函数
         self.view.before_label_pushButton.clicked.connect(lambda: self.select_folder(self.view.before_label_lineEdit, 'folder_path1'))
@@ -103,29 +116,32 @@ class Controller:
         self.view.after_label_pushButton.clicked.connect(lambda: self.select_folder(self.view.after_label_lineEdit, 'folder_path3'))
 
 
-        # #校验
+        # 校验
         self.view.jy_pushButton.clicked.connect(self.check_folder_data)
+
+        # 转换按钮
+        self.view.zh_pushButton.clicked.connect(self.Label_change)
+        # 转换线程
+        self.ChangeLabel_t = ChangeLabel_Thread(self, self.model, self.view)
+        self.ChangeLabel_t.start()
+
 
     #读取配置config.json中的数据
     def init_PYqt_View(self):
         dist_info = self.model.Read_Record_Pyqt_info()
-        if dist_info != -1:
+        if dist_info != None:
             #print(dist_info)
-            self.view.labelname_lineEdit.setText(dist_info["class_type"])
-            self.view.before_comboBox.setCurrentText(dist_info["combo1"])
-            self.view.after_comboBox.setCurrentText(dist_info["combo2"])
-            self.view.before_label_lineEdit.setText(dist_info["label_1"])
-            self.view.before_pic_lineEdit.setText(dist_info["label_2"])
-            self.view.after_label_lineEdit.setText(dist_info["label_3"])
+            self.view.labelname_lineEdit.setText(dist_info["labelname_lineEdit"])
+            self.view.before_comboBox.setCurrentText(dist_info["before_comboBox"])
+            self.view.after_comboBox.setCurrentText(dist_info["after_comboBox"])
+            self.view.before_label_lineEdit.setText(dist_info["before_label_lineEdit"])
+            self.view.before_pic_lineEdit.setText(dist_info["before_pic_lineEdit"])
+            self.view.after_label_lineEdit.setText(dist_info["after_label_lineEdit"])
             if self.view.after_label_lineEdit.text() == '':
                 self.view.after_label_lineEdit.setText("可不选择转化后文件夹")
 
 
-        # #转换
-        # self.view.button4.clicked.connect(self.Label_change)
 
-        # self.ChangeLabel_t = ChangeLabel_Thread(self, model, view)
-        # self.ChangeLabel_t.start()
 
         # # 进度条
         # self.JDT_Thread = JDT_Thread(model, view)
@@ -179,34 +195,56 @@ class Controller:
                 QtWidgets.QMessageBox.warning(None, "警告", "文件错误，确保图片为jpg图片")
 
 
+    def Label_change_init(self):
+
+        # 1. 检测转换的标签，路径是否为空，转换后的标签是否为空
+        update_data = self.update_controls_view() #更新数据
+        print(update_data)
+        # 找到值为空的键并打印出
+        for key, value in update_data.items():
+            if value == "":
+                return (f"'{self.controls_view_alia[key]}' 的值为空")
+        # 2. 检测是否为空并输出对应的控件名称
 
 
-    
+            
+
+                
+
+        return 0
+
     def Label_change(self):  # sourcery skip: lift-duplicated-conditional
-        self.view.button4.setDisabled(True)
-        self.model.thread_flag = 1
-        self.model.jdt_flag = 1
-        # self.view.button4.setDisabled(True)
+        self.view.zh_pushButton.setDisabled(True)
+        rtv = self.Label_change_init()
+        if  rtv !=0:
+            self.view.zh_pushButton.setEnabled(True)
+            QtWidgets.QMessageBox.warning(None, "警告", rtv)
+            return 0
 
-        # selected_option1 = self.view.combo1.currentText() #转换前的标签
-        # selected_option2 = self.view.combo2.currentText() #转换前的标签
+
+        self.controls_view_value["labelname_lineEdit"] = self.view.labelname_lineEdit.text()
+        self.controls_view_value["before_comboBox"] = self.view.before_comboBox.currentText()
+        self.controls_view_value["after_comboBox"] = self.view.after_comboBox.currentText()
+        self.controls_view_value["before_label_lineEdit"] = self.view.before_label_lineEdit.text()
+        self.controls_view_value["before_pic_lineEdit"] = self.view.before_pic_lineEdit.text()
+        self.controls_view_value["after_label_lineEdit"] = self.view.after_label_lineEdit.text()
+
         # # 1. 检测所有参数是否正确
-        # rtv = self.model.check_info_label(selected_option1, selected_option2, self.view.label_text.text(),self.view.lineEdit_image.text(), self.view.lineEdit1.text())
-        # if rtv < 0:
-        #     QtWidgets.QMessageBox.warning(None, "警告", self.model.error_messages[rtv])
+        rtv = self.model.check_info_label(self.controls_view_value["before_comboBox"], self.controls_view_value["after_comboBox"], 
+                    self.controls_view_value["labelname_lineEdit"],self.controls_view_value["before_pic_lineEdit"], self.controls_view_value["before_label_lineEdit"] )
+        if rtv < 0:
+            QtWidgets.QMessageBox.warning(None, "警告", self.model.error_messages[rtv])
         
-        # my_dict = { 'class_type': self.view.label_text.text(), 
-        #             'combo1': selected_option1, 
-        #             'combo2': selected_option2,
-        #             'label_1': self.view.lineEdit1.text(),
-        #             'label_2': self.view.lineEdit2.text(),
-        #             'label_3': self.view.lineEdit_image.text(),
-        #         }
+
 
         # # 2. 记录所有值
-        # self.model.Write_Record_Pyqt_info(str(my_dict))
+        self.model.Write_Record_Pyqt_info(str(self.update_controls_view()))
 
-        # #传入标签名，和图片路径，和转换路径和class
-        # self.model.change_label(selected_option1, selected_option2, self.view.label_text.text(),self.view.lineEdit_image.text(), self.view.lineEdit1.text(), self.view.lineEdit2.text())
-        # self.view.button4.setEnabled(True)
+
+        self.model.thread_flag = 1  #启动线程工作
+        self.model.jdt_flag = 1 #启动进度条工作
+
+
+
+        self.view.zh_pushButton.setEnabled(True)
 
