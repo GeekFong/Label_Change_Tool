@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
 import os
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement
@@ -6,6 +9,7 @@ import time
 import logging
 from xml.dom import minidom
 import glob
+from PyQt5 import QtWidgets
 
 class Xml_make(object):
     def __init__(self):
@@ -25,6 +29,8 @@ class Xml_make(object):
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
+
+
 
     def _imageinfo(self, list_top):
         annotation_root = ET.Element('annotation')
@@ -112,18 +118,28 @@ class Xml_make(object):
         tree.write(list_top[0], encoding='utf-8', xml_declaration=True)
         
 
-def txt_2_xml(source_path, xml_save_dir, txt_dir, class_type):
+#检测文件夹内容是否为空
+def is_file_content_empty(file_path):
+    # 打开文件并读取内容
+    with open(file_path, 'r', encoding="utf-8") as f:
+        file_content = f.read()
 
-    
-    #class_type = class_type.split(",")
-    #print(class_type)
-    COUNT = 0
-    print(f'{os.path.dirname(txt_dir)}->路径->{os.path.dirname(xml_save_dir)}')
+    # 检测文件内容是否为空
+    return not file_content.strip()
+
+
+def txt_2_voc(source_path, xml_save_dir, txt_dir, class_type, View_progressBar):
+
+    COUNT = 0 #统计次数
+    print(f'图片路径{source_path}->标签路径{txt_dir}->转后后存放的路径{xml_save_dir}')
     print("开始转换")
-    time.sleep(2)
+
     try:
         for folder_path_tuple, folder_name_list, file_name_list in os.walk(source_path):
             for file_name in file_name_list:
+                #print(is_file_content_empty(os.path.abspath(file_name)))# 获取文件的完整路径
+                # if is_file_content_empty(os.path.abspath(file_name)) == False:
+                #     print(f"{file_name}数据为空")
                 file_suffix = os.path.splitext(file_name)[-1]
                 if file_suffix != '.jpg':
                     continue
@@ -148,13 +164,9 @@ def txt_2_xml(source_path, xml_save_dir, txt_dir, class_type):
                                 width, height, depth])
                 for line in open(txt_path, 'r'):
                     line = line.strip()
-                    info = line.split(' ')
-                    
+                    info = line.split(' ')        
                     name = info[0]
-                    print(name)
-                    print(class_type)
                     classs = class_type[int(name)]
-                    print(classs)
                     x_cen = float(info[1]) * im_w
                     y_cen = float(info[2]) *im_h
                     w = float(info[3]) * im_w
@@ -165,40 +177,51 @@ def txt_2_xml(source_path, xml_save_dir, txt_dir, class_type):
                     ymax = int(y_cen + h/2)
                     list_bndbox.extend([classs, flag, pose, truncated, difficult,
                                         str(xmin), str(ymin), str(xmax), str(ymax)])
-                    #print(list_bndbox)
                 Xml_make().txt_to_xml(list_top, list_bndbox)
                 COUNT += 1
-                logging.info(f'{os.path.basename(txt_path)}转化为{os.path.basename(xml_save_path)}')
-                #print(COUNT, xml_save_path)     
-                #print(COUNT)
-                time.sleep(0.025)                         
+                View_progressBar.setValue((COUNT/len(file_name_list))*100)
+                print(f'{os.path.basename(txt_path)}转化为{os.path.basename(xml_save_path)}')
+
+                time.sleep(0.01)    
+        QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+        View_progressBar.setValue(0)                     
     except Exception as e:
         print(e)
 
 
-def yolov5_to_xml_batch(folder_path, xml_output_path, image_path, class_label):
-    print(class_label)
+def txt_to_xml(folder_path, xml_output_path, image_path, class_label, View_progressBar):
+
+    COUNT = 0 #统计次数
+    print(f'图片路径{image_path}->标签路径{folder_path}->转后后存放的路径{xml_output_path}')
+    print("开始转换")
+
     if not os.path.exists(xml_output_path):
         os.makedirs(xml_output_path)
 
     for filename in os.listdir(folder_path):
         if filename.endswith('.txt'):
             yolov5_annotation_file = os.path.join(folder_path, filename)
-            image_filename = os.path.splitext(filename)[0] + '.jpg'
-            image_file_path = os.path.join(image_path, image_filename)
-            xml_output_file = os.path.join(xml_output_path, os.path.splitext(filename)[0] + '.xml')
+            image_filename = f'{os.path.splitext(filename)[0]}.jpg'
+            image_file_path = os.path.normpath(os.path.join(image_path, image_filename))
+            xml_output_file = os.path.join(
+                xml_output_path, f'{os.path.splitext(filename)[0]}.xml'
+            )
             with open(yolov5_annotation_file, 'r') as f:
                 lines = f.readlines()
-            
+
+
             root = ET.Element('doc')
             folder = ET.SubElement(root, 'folder')
             folder.text = os.path.dirname(image_file_path)
 
+            print(image_file_path)
+            path = ET.SubElement(root, 'path')
+            path.text = image_file_path
+
             filename = ET.SubElement(root, 'filename')
             filename.text = os.path.basename(image_file_path)
 
-            path = ET.SubElement(root, 'path')
-            path.text = image_file_path
+
 
             outputs = ET.SubElement(root, 'outputs')
             object_elem = ET.SubElement(outputs, 'object')
@@ -207,14 +230,14 @@ def yolov5_to_xml_batch(folder_path, xml_output_path, image_path, class_label):
             image_width, image_height = image.size
 
             for line in lines:
-                print(line)
-                print(len(line.split()))
+                #print(line)
+                #print(len(line.split()))
                 class_id, x_center, y_center, width, height = line.split()
-                print(class_id)
+                #print(class_id)
                 if int(class_id) >= len(class_label):
                     continue
                 class_label_name = class_label[int(class_id)]
-                print(class_label_name)
+                #print(class_label_name)
                 # Convert relative coordinates to absolute coordinates
                 x_min = int(float(x_center) * image_width - float(width) * image_width / 2)
                 y_min = int(float(y_center) * image_height - float(height) * image_height / 2)
@@ -246,11 +269,20 @@ def yolov5_to_xml_batch(folder_path, xml_output_path, image_path, class_label):
             depth.text = '3'
 
             # Create a formatted XML string
-            xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")
-            logging.info(xml_output_file)
-            with open(xml_output_file, 'w') as f:
+            xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="    ")
+            print(xml_output_file)
+            # 将格式化的XML字符串写入文件
+            with open(xml_output_file, 'w', encoding="utf-8") as f:
                 f.write(xml_str)
-            time.sleep(0.025)
+
+            #进度条
+            COUNT += 1
+            View_progressBar.setValue((COUNT/len(os.listdir(folder_path)))*100)
+            time.sleep(0.01)
+
+    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+    View_progressBar.setValue(0) 
+            
 
 def get_image_size(image_path):
     image = Image.open(image_path)
@@ -391,9 +423,16 @@ def convert_voc_to_xml(src_img_dir, src_txt_dir, src_xml_dir, classes):
         xml_file.write('    </size>\n')
         xml_file.write('</doc>')
     
-        time.sleep(0.02)
+        time.sleep(0.08)
 
-def yolov5_to_txt_batch(folder_path, txt_output_path, image_path, class_label):
+
+
+def xml_to_txt_batch(folder_path, txt_output_path, image_path, class_label, View_progressBar):
+
+    COUNT = 0 #统计次数
+    print(f'图片路径{image_path}->标签路径{folder_path}->转后后存放的路径{txt_output_path}')
+    print("开始转换")
+
     if not os.path.exists(txt_output_path):
         os.makedirs(txt_output_path)
 
@@ -403,13 +442,14 @@ def yolov5_to_txt_batch(folder_path, txt_output_path, image_path, class_label):
             image_filename = os.path.splitext(filename)[0] + '.jpg'
             image_file_path = os.path.join(image_path, image_filename)
             txt_output_file = os.path.join(txt_output_path, os.path.splitext(filename)[0] + '.txt')
-
+            # print(xml_file)
+            # print(image_file_path)
+            # print(txt_output_file)
             tree = ET.parse(xml_file)
             root = tree.getroot()
-
             image = Image.open(image_file_path)
             image_width, image_height = image.size
-            logging.info(txt_output_file)
+            print(txt_output_file)
             with open(txt_output_file, 'w') as f:
                 for item in root.findall('outputs/object/item'):
                     name = item.find('name').text
@@ -426,16 +466,26 @@ def yolov5_to_txt_batch(folder_path, txt_output_path, image_path, class_label):
 
                     line = f"{class_id} {x_center} {y_center} {width} {height}"
                     f.write(line + '\n')
-            time.sleep(0.02)
+            COUNT += 1
+            View_progressBar.setValue((COUNT/len(os.listdir(folder_path)))*100)
+            time.sleep(0.008)
+    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+    View_progressBar.setValue(0) 
+
                     
-def convert_xml_to_voc_batch(xml_folder, dest_folder, image_path, class_labels):
+def convert_xml_to_voc_batch(xml_folder, dest_folder, image_path, class_labels, View_progressBar):
+
+    COUNT = 0 #统计次数
+    print(f'图片路径{image_path}->标签路径{xml_folder}->转后后存放的路径{dest_folder}')
+    print("开始转换")
+
     os.makedirs(dest_folder, exist_ok=True)
 
     for filename in os.listdir(xml_folder):
         if filename.endswith('.xml'):
             xml_file_path = os.path.join(xml_folder, filename)
             dest_xml_path = os.path.join(dest_folder, os.path.splitext(filename)[0] + '.xml')
-
+            
             tree = ET.parse(xml_file_path)
             root = tree.getroot()
 
@@ -447,7 +497,7 @@ def convert_xml_to_voc_batch(xml_folder, dest_folder, image_path, class_labels):
 
             filename_elem = ET.SubElement(annotation, 'filename')
             filename_elem.text = os.path.splitext(root.find('filename').text)[0]
-
+            #print("2")
             path = ET.SubElement(annotation, 'path')
             path.text = os.path.join(image_path, filename_elem.text + '.jpg')
 
@@ -457,7 +507,7 @@ def convert_xml_to_voc_batch(xml_folder, dest_folder, image_path, class_labels):
             source = ET.SubElement(annotation, 'source')
             database = ET.SubElement(source, 'database')
             database.text = 'Unknown'
-
+            #print("3")
             size = ET.SubElement(annotation, 'size')
             width = ET.SubElement(size, 'width')
             width.text = root.find('size/width').text
@@ -468,7 +518,7 @@ def convert_xml_to_voc_batch(xml_folder, dest_folder, image_path, class_labels):
 
             segmented = ET.SubElement(annotation, 'segmented')
             segmented.text = '0'
-
+            #print("4")
             objects = root.findall('outputs/object')
             for obj in objects:
                 item = obj.find('item')
@@ -512,9 +562,14 @@ def convert_xml_to_voc_batch(xml_folder, dest_folder, image_path, class_labels):
             new_tree = ET.ElementTree(annotation)
             new_tree.write(dest_xml_path, encoding='utf-8', xml_declaration=True)
 
-            logging.info(dest_xml_path)
+            #logging.info(dest_xml_path)
             # 使用minidom重新解析XML文件并设置格式为一行行
             dom = minidom.parse(dest_xml_path)
             with open(dest_xml_path, 'w') as f:
                 dom.writexml(f, addindent='', newl='\n')
-            time.sleep(0.025)
+            print(dest_xml_path)
+            COUNT += 1
+            View_progressBar.setValue((COUNT/len(os.listdir(xml_folder)))*100)
+            time.sleep(0.008)
+    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+    View_progressBar.setValue(0) 

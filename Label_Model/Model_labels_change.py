@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
 import os
 import shutil
 from PIL import Image
@@ -11,11 +14,9 @@ class Model:
     def __init__(self):
         self.wrong_files = os.getcwd() + r'\wrong_file'
         self.pyqt_config = os.getcwd() + r'\config\config.ini'
-        self.xx2xx_file = os.getcwd() + r'\exp'
         self.file_cnt = 0
-        self.delete_files_in_folder(self.wrong_files)
         self.thread_flag = 0
-        self.jdt_flag = 0
+        self.delete_files_in_folder(self.wrong_files)
 
         self.option_map = {
             ("yolo-txt", "pascal-voc"): self.process_txt_voc,
@@ -43,6 +44,13 @@ class Model:
             -5:"要转换的标签和你文件夹中的标签不一致"
         }
 
+
+    def get_current_timestamp(self):
+        # 获取当前时间戳（秒数）
+        timestamp = int(time.time())
+        return str(timestamp)
+    
+
     #检测是否所有图片都是jpg
     def check_folder_for_jpg_images(self, folder_path):
         file_paths = [os.path.join(folder_path, filename) for filename in os.listdir(folder_path)]
@@ -62,15 +70,7 @@ class Model:
         #print(folder_path)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-        
-        if not os.path.exists(self.xx2xx_file):
-            os.makedirs(self.xx2xx_file)
 
-        for file_name in os.listdir(folder_path):
-            file_path = os.path.join(folder_path, file_name)
-            #print(file_path)
-            os.system(f'rmdir /s /q "{folder_path}"')
-            #os.rmdir(file_path)
 
 
     #计算文件夹下有多少文件
@@ -199,106 +199,52 @@ class Model:
             return -1
 
 
-
-    # selected_option1：转换前的格式
-    # selected_option1：转换后的格式
-    # selected_option1：转换后的格式
-
-    def change_label(self, selected_option1, selected_option2, class_type, images_path, lab_path, custom_folder):
-        # sourcery skip: hoist-statement-from-if
-        
-        # 1. 开始创建文件夹，没有选择目标文件夹就在本地文件夹生成
-        if custom_folder == '可不选择转化后文件夹':
-            timestamp = time.time()
-            datetime_obj = datetime.fromtimestamp(timestamp)
-            formatted_datetime = datetime_obj.strftime("%Y-%m-%d-%H-%M-%S")
-            timestamp_path = f'{self.xx2xx_file}/{formatted_datetime}/'
-
-            os.makedirs(timestamp_path) #创建转后的大文件名
-            os.makedirs(f'{timestamp_path}/{selected_option1}To{selected_option2}/') #创建转化后的标签
-
-            # 2.复制文件到具体的目录
-            logging.info(f"创建文件夹，并复制文件到{timestamp_path}/images/")
-            logging.info(f"创建文件夹，并复制文件到{timestamp_path}/{selected_option1}/")
-            shutil.copytree(images_path, f'{timestamp_path}/images/')
-            shutil.copytree(lab_path, f'{timestamp_path}/{selected_option1}/')
-            
-            # 调用相应的处理函数
+    def change_label(self, selected_option1, selected_option2, class_type, images_path, lab_path, custom_folder, View_progressBar):
+        # 调用相应的处理函数
+        try:
             if (selected_option1, selected_option2) in self.option_map:
                 processing_function = self.option_map[(selected_option1, selected_option2)]
-                processing_function(class_type, images_path, lab_path, f'{timestamp_path}/{selected_option1}To{selected_option2}/')  # 传递所需的参数
+                print(f'开始解析文件 —— 解析的文件放到{custom_folder}/{selected_option1}To{selected_option2}')
+                print("开始转换 voc标签变为xml标签")
+                print(f"标签种类为{class_type}")
+                print("请确保标签的位置和数量正确，程序中无法确认你的标签名字和数量是否对应")
+                        # 检查文件夹是否已存在，不存在则创建
+                if not os.path.exists(f'{custom_folder}/{self.get_current_timestamp()}_{selected_option1}To{selected_option2}'):
+                    os.makedirs(f'{custom_folder}/{self.get_current_timestamp()}_{selected_option1}To{selected_option2}')
+                processing_function(class_type, images_path, lab_path, 
+                    f'{custom_folder}/{self.get_current_timestamp()}_{selected_option1}To{selected_option2}', View_progressBar)  # 传递所需的参数
             else:
                 # 处理未找到对应处理函数的情况
-                logging.info("未找到匹配的处理函数。")
-
-        else:
-        # 2. 有选择本地文件夹就在本地文件夹中生成
-            # 删除目标文件夹
-            if os.path.exists(f'{custom_folder}/images'):
-                shutil.rmtree(f'{custom_folder}/images') #删除图片
-            if os.path.exists(f'{custom_folder}/{selected_option1}'):
-                shutil.rmtree(f'{custom_folder}/{selected_option1}') #删除要转换的标签
-            if os.path.exists(f'{custom_folder}/{selected_option1}To{selected_option2}'):
-                shutil.rmtree(f'{custom_folder}/{selected_option1}To{selected_option2}') #删除要转换的标签
-
-            try:
-                os.makedirs(f'{custom_folder}/{selected_option1}To{selected_option2}/') #创建转化后的标签
-
-                # 2.复制文件到具体的目录
-                logging.info(f"创建文件夹，并复制文件到{images_path}")
-                logging.info(f"创建文件夹，并复制文件到{lab_path}")
-                shutil.copytree(images_path, f'{custom_folder}/images/')
-                shutil.copytree(lab_path, f'{custom_folder}/{selected_option1}/')
-
-            except FileNotFoundError:
-                logging.info(FileNotFoundError)
-                return -1
-
-
-            # 调用相应的处理函数
-            try:
-                if (selected_option1, selected_option2) in self.option_map:
-                    processing_function = self.option_map[(selected_option1, selected_option2)]
-                    logging.info(f'开始解析文件 —— 解析的文件放到{custom_folder}/{selected_option1}To{selected_option2}')
-                    logging.info("开始转换 voc标签变为xml标签")
-                    logging.info(f"标签种类为{class_type}")
-                    logging.info("请确保标签的位置和数量正确，程序中无法确认你的标签名字和数量是否对应")
-                    processing_function(class_type, images_path, lab_path, f'{custom_folder}/{selected_option1}To{selected_option2}')  # 传递所需的参数
-                else:
-                    # 处理未找到对应处理函数的情况
-                    logging.info("未找到匹配的处理函数。")
-            except Exception as e:
-                print(f'未知错误：{e}')
-                return -1
+                print("未找到匹配的处理函数。")
+        except Exception as e:
+            print(f'未知错误：{e}')
+            return -1
 
         return 0
 
-    def process_txt_voc(self, class_type, images_path, lab_path, custom_folder):
-        change_label_progarm.txt_2_xml(images_path, custom_folder, lab_path, class_type)
 
-        # 函数逻辑
-
-    def process_txt_xml(self, class_type, images_path, lab_path, custom_folder):
-        # print(class_type)
-        # print(images_path)
-        # print(lab_path)
-        # print(custom_folder)
-        change_label_progarm.yolov5_to_xml_batch(lab_path, custom_folder, images_path, class_type)
+    
+    def process_txt_voc(self, class_type, images_path, lab_path, custom_folder, View_progressBar):
+        change_label_progarm.txt_2_voc(images_path, custom_folder, lab_path, class_type, View_progressBar)
 
 
-    def process_voc_txt(self, class_type, images_path, lab_path, custom_folder):
+    def process_txt_xml(self, class_type, images_path, lab_path, custom_folder, View_progressBar):
+        change_label_progarm.txt_to_xml(lab_path, custom_folder, images_path, class_type, View_progressBar)
+
+
+    def process_voc_txt(self, class_type, images_path, lab_path, custom_folder,View_progressBar):
         change_label_progarm.convert_voc_to_yolov5(lab_path, custom_folder, images_path, class_type)
 
-    def process_voc_xml(self, class_type, images_path, lab_path, custom_folder):
+    def process_voc_xml(self, class_type, images_path, lab_path, custom_folder, View_progressBar):
         change_label_progarm.convert_voc_to_xml(images_path, lab_path, custom_folder, class_type)
 
 
+    
+    def process_xml_txt(self, class_type, images_path, lab_path, custom_folder,View_progressBar):
+        change_label_progarm.xml_to_txt_batch(lab_path, custom_folder, images_path, class_type,View_progressBar)
 
-    def process_xml_txt(self, class_type, images_path, lab_path, custom_folder):
-        change_label_progarm.yolov5_to_txt_batch(lab_path, custom_folder, images_path, class_type)
-
-    def process_xml_voc(self, class_type, images_path, lab_path, custom_folder):
-        change_label_progarm.convert_xml_to_voc_batch(lab_path, custom_folder, images_path, class_type)
+    def process_xml_voc(self, class_type, images_path, lab_path, custom_folder,View_progressBar):
+        change_label_progarm.convert_xml_to_voc_batch(lab_path, custom_folder, images_path, class_type,View_progressBar)
 
 
 

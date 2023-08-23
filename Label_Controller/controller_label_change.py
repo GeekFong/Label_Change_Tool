@@ -18,17 +18,17 @@ class ChangeLabel_Thread(QThread):
             
             if self.CGl_model.thread_flag == 1:
 
-                #传入标签名，和图片路径，和转换路径和class
+                #传入标签名，和图片路径，和转换路径和class,把进度条也传进去
                 rtv = self.CGl_model.change_label(self.contrl.controls_view_value["before_comboBox"], self.contrl.controls_view_value["after_comboBox"],
                         self.contrl.controls_view_value["labelname_lineEdit"].split(","), self.contrl.controls_view_value["before_pic_lineEdit"], 
-                        self.contrl.controls_view_value["before_label_lineEdit"], self.contrl.controls_view_value["after_label_lineEdit"])
+                        self.contrl.controls_view_value["before_label_lineEdit"], self.contrl.controls_view_value["after_label_lineEdit"], self.CGl_view.progressBar)
                 #print(rtv)
                 if rtv is None:
-                    self.CGl_model.thread_flag = 2
+                    self.CGl_model.thread_flag = 0
                     QtWidgets.QMessageBox.warning(None, "警告", "未知错误")
 
 
-                self.CGl_model.thread_flag = 2
+                self.CGl_model.thread_flag = 0
 
             time.sleep(1)
 
@@ -143,21 +143,6 @@ class Controller:
 
 
 
-        # # 进度条
-        # self.JDT_Thread = JDT_Thread(model, view)
-        # self.JDT_Thread.start()
-
-        #logging.info("This is an info message...........")
-        # self.view.logging.info("Controller")
-        # self.view.logging.info("This is an info message.")
-        # self.view.logging.warning("This is a warning message.")
-        # self.view.logging.error("This is an error message.")
-
-
-
-
-
-
     def select_folder(self, target_widget, target_attribute):
         dialog = QtWidgets.QFileDialog()
         dialog.setFileMode(QtWidgets.QFileDialog.Directory)
@@ -242,8 +227,6 @@ class Controller:
 
 
         self.model.thread_flag = 1  #启动线程工作
-        self.model.jdt_flag = 1 #启动进度条工作
-
 
 
         self.view.zh_pushButton.setEnabled(True)

@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
 from PyQt5 import QtWidgets
 import sys
 from qt_material import apply_stylesheet
