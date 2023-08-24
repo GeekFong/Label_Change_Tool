@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
 # Form implementation generated from reading ui file '.\View_Labels_Change.ui'

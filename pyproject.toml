@@ -10,6 +10,7 @@ python = "^3.8"
 pyqt5 = "^5.15.9"
 qt-material = "^2.14"
 pillow = "^10.0.0"
+nuitka = "^1.7.10"
 
 
 [build-system]

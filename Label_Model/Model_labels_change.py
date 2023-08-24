@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
 import os
@@ -60,7 +59,7 @@ class Model:
                     if img.format != "JPEG":
                         return -2
             except Exception as e:
-                return -2
+                return file_path
 
         return 0
 

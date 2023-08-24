@@ -162,11 +162,6 @@ class Controller:
                 return (f"'{self.controls_view_alia[key]}' 的值为空")
         # 2. 检测是否为空并输出对应的控件名称
 
-
-            
-
-                
-
         return 0
 
     def Label_change(self):  # sourcery skip: lift-duplicated-conditional
@@ -190,6 +185,8 @@ class Controller:
                     self.controls_view_value["labelname_lineEdit"],self.controls_view_value["before_pic_lineEdit"], self.controls_view_value["before_label_lineEdit"] )
         if rtv < 0:
             QtWidgets.QMessageBox.warning(None, "警告", self.model.error_messages[rtv])
+            self.view.zh_pushButton.setEnabled(True)
+            return 0
         
 
 
@@ -200,5 +197,5 @@ class Controller:
         self.model.thread_flag = 1  #启动线程工作
 
 
-        self.view.zh_pushButton.setEnabled(True)
+        #self.view.zh_pushButton.setEnabled(True)
 
