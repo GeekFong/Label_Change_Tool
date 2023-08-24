@@ -5,9 +5,8 @@ import os
 import shutil
 from PIL import Image
 import time
-from datetime import datetime
-import logging
 from Label_Model import change_label_progarm
+from logger.logging_utils import text_writer
 
 # 创建模型
 class Model:
@@ -233,10 +232,10 @@ class Model:
 
 
     def process_voc_txt(self, class_type, images_path, lab_path, custom_folder,View_progressBar):
-        change_label_progarm.convert_voc_to_yolov5(lab_path, custom_folder, images_path, class_type)
+        change_label_progarm.convert_voc_to_yolov5(lab_path, custom_folder, images_path, class_type, View_progressBar)
 
     def process_voc_xml(self, class_type, images_path, lab_path, custom_folder, View_progressBar):
-        change_label_progarm.convert_voc_to_xml(images_path, lab_path, custom_folder, class_type)
+        change_label_progarm.convert_voc_to_xml(images_path, lab_path, custom_folder, class_type, View_progressBar)
 
 
     

@@ -1,9 +1,7 @@
-from PyQt5.QtWidgets import QFileDialog
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import QSettings
 import time
 from PyQt5.QtCore import QThread
-import logging
+from logger.logging_utils import text_writer
+from PyQt5 import QtWidgets
 
 class ChangeLabel_Thread(QThread):
     def __init__(self,contrl, model, view):
@@ -33,40 +31,13 @@ class ChangeLabel_Thread(QThread):
             time.sleep(1)
 
 
-class JDT_Thread(QThread):
-    def __init__(self, model, view):
-        super().__init__()
-        
-        self.Jdt_model = model
-        self.Jdt_view = view
-        self.cnt = 0
-
-    def run(self):
-        while True:
-            if self.Jdt_model.jdt_flag == 1:
-                self.cnt = self.cnt + 1
-                self.Jdt_view.progress_bar.setValue(self.cnt)
-            
-            if self.cnt == 99:
-                self.cnt = 99
-
-            if self.Jdt_model.thread_flag == 2:
-                self.Jdt_view.progress_bar.setValue(100)
-                self.Jdt_model.jdt_flag = 0
-                self.cnt = 0
-                self.Jdt_view.button4.setEnabled(True)
-
-            if  self.Jdt_model.thread_flag == 0:
-                self.cnt = 0
-                self.Jdt_view.progress_bar.setValue(self.cnt)
-                
-            time.sleep(1)
 
 
 
 # 创建控制器
 class Controller:
     def __init__(self, model, view):
+
         self.model = model
         self.view = view
         self.init_PYqt_View() #读取配置文件中的默认配置，每次转换都会记录下来

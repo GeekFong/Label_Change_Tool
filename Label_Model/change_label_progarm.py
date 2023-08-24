@@ -10,6 +10,7 @@ import logging
 from xml.dom import minidom
 import glob
 from PyQt5 import QtWidgets
+from logger.logging_utils import text_writer
 
 class Xml_make(object):
     def __init__(self):
@@ -119,14 +120,14 @@ class Xml_make(object):
         
 
 #检测文件夹内容是否为空
-def is_file_content_empty(file_path):
-    # 打开文件并读取内容
-    with open(file_path, 'r', encoding="utf-8") as f:
-        file_content = f.read()
-
-    # 检测文件内容是否为空
-    return not file_content.strip()
-
+def is_file_empty(filename):
+    # 获取文件的完整路径
+    file_path = os.path.abspath(filename)
+    
+    # 获取文件大小
+    file_size = os.path.getsize(file_path)
+    
+    return file_size == 0
 
 def txt_2_voc(source_path, xml_save_dir, txt_dir, class_type, View_progressBar):
 
@@ -137,9 +138,8 @@ def txt_2_voc(source_path, xml_save_dir, txt_dir, class_type, View_progressBar):
     try:
         for folder_path_tuple, folder_name_list, file_name_list in os.walk(source_path):
             for file_name in file_name_list:
-                #print(is_file_content_empty(os.path.abspath(file_name)))# 获取文件的完整路径
-                # if is_file_content_empty(os.path.abspath(file_name)) == False:
-                #     print(f"{file_name}数据为空")
+
+
                 file_suffix = os.path.splitext(file_name)[-1]
                 if file_suffix != '.jpg':
                     continue
@@ -149,6 +149,14 @@ def txt_2_voc(source_path, xml_save_dir, txt_dir, class_type, View_progressBar):
                 xml_save_path = os.path.join(xml_save_dir, file_name.replace(file_suffix, '.xml'))
                 txt_path = os.path.join(txt_dir, file_name.replace(file_suffix, '.txt'))
                 filename = os.path.splitext(file_name)[0]
+                #print(txt_path)
+                if is_file_empty(txt_path) == True:
+                    print(f"{txt_path}数据为空")
+                    time.sleep(0.5) 
+                    QtWidgets.QMessageBox.information(None, "通知", f"{txt_path}数据为空,请删除后再执行操作")
+                    time.sleep(0.5) 
+                    return 0
+
                 checked = 'NO'
                 im = Image.open(path)
                 im_w = im.size[0]
@@ -206,6 +214,14 @@ def txt_to_xml(folder_path, xml_output_path, image_path, class_label, View_progr
             xml_output_file = os.path.join(
                 xml_output_path, f'{os.path.splitext(filename)[0]}.xml'
             )
+
+            if is_file_empty(yolov5_annotation_file) == True:
+                print(f"{yolov5_annotation_file}数据为空")
+                time.sleep(0.5) 
+                QtWidgets.QMessageBox.information(None, "通知", f"{yolov5_annotation_file}数据为空,请删除后再执行操作")
+                time.sleep(0.5) 
+                return 0
+
             with open(yolov5_annotation_file, 'r') as f:
                 lines = f.readlines()
 
@@ -214,7 +230,7 @@ def txt_to_xml(folder_path, xml_output_path, image_path, class_label, View_progr
             folder = ET.SubElement(root, 'folder')
             folder.text = os.path.dirname(image_file_path)
 
-            print(image_file_path)
+            #print(image_file_path)
             path = ET.SubElement(root, 'path')
             path.text = image_file_path
 
@@ -230,9 +246,15 @@ def txt_to_xml(folder_path, xml_output_path, image_path, class_label, View_progr
             image_width, image_height = image.size
 
             for line in lines:
-                #print(line)
-                #print(len(line.split()))
-                class_id, x_center, y_center, width, height = line.split()
+                # 这里用yolo重新识别可能有多一个置信度
+                len_line = line.split()
+                # 标签中无置信度的情况
+                if len(len_line) == 5:
+                    class_id, x_center, y_center, width, height = line.split()
+                elif len(len_line) == 6:
+                    class_id, x_center, y_center, width, height,zxd = line.split()
+                else:
+                    print("错误的txt标签文件")
                 #print(class_id)
                 if int(class_id) >= len(class_label):
                     continue
@@ -256,6 +278,7 @@ def txt_to_xml(folder_path, xml_output_path, image_path, class_label, View_progr
                 xmax.text = str(x_max)
                 ymax = ET.SubElement(bndbox, 'ymax')
                 ymax.text = str(y_max)
+                time.sleep(0.01)
 
             labeled = ET.SubElement(root, 'labeled')
             labeled.text = 'true'
@@ -270,7 +293,7 @@ def txt_to_xml(folder_path, xml_output_path, image_path, class_label, View_progr
 
             # Create a formatted XML string
             xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="    ")
-            print(xml_output_file)
+            print(f"{yolov5_annotation_file}转换为{xml_output_file}")
             # 将格式化的XML字符串写入文件
             with open(xml_output_file, 'w', encoding="utf-8") as f:
                 f.write(xml_str)
@@ -278,9 +301,11 @@ def txt_to_xml(folder_path, xml_output_path, image_path, class_label, View_progr
             #进度条
             COUNT += 1
             View_progressBar.setValue((COUNT/len(os.listdir(folder_path)))*100)
-            time.sleep(0.01)
+        time.sleep(0.01)
 
+    time.sleep(1)
     QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+    time.sleep(0.5)
     View_progressBar.setValue(0) 
             
 
@@ -326,10 +351,15 @@ def pascal_voc_to_yolov5(xml_path, txt_path, image_path, classes):
             class_index = classes.index(name)
 
             txt_file.write(f"{class_index} {x} {y} {w} {h}\n")
-        time.sleep(0.025) 
+        time.sleep(0.01) 
 
 
-def convert_voc_to_yolov5(xml_dir, txt_dir, image_dir, classes):
+def convert_voc_to_yolov5(xml_dir, txt_dir, image_dir, classes, View_progressBar):
+
+    COUNT = 0 #统计次数
+    print(f'图片路径{image_dir}->标签路径{xml_dir}->转后后存放的路径{txt_dir}')
+    print("开始转换")
+
     # 创建保存txt文件的目录
     os.makedirs(txt_dir, exist_ok=True)
 
@@ -337,15 +367,37 @@ def convert_voc_to_yolov5(xml_dir, txt_dir, image_dir, classes):
     for filename in os.listdir(xml_dir):
         if filename.endswith('.xml'):
             xml_path = os.path.join(xml_dir, filename)
+            if is_file_empty(xml_path) == True:
+                print(f"{xml_path}数据为空")
+                time.sleep(0.5) 
+                QtWidgets.QMessageBox.information(None, "通知", f"{xml_path}数据为空,请删除后再执行操作")
+                time.sleep(0.5) 
+                return 0
             txt_filename = f'{os.path.splitext(filename)[0]}.txt'
             txt_path = os.path.join(txt_dir, txt_filename)
             image_filename = f'{os.path.splitext(filename)[0]}.jpg'
             image_path = os.path.join(image_dir, image_filename)
+
             pascal_voc_to_yolov5(xml_path, txt_path, image_path, classes)
 
-def convert_voc_to_xml(src_img_dir, src_txt_dir, src_xml_dir, classes):
+            print(f"{xml_path}转化为{txt_filename}")
+            COUNT += 1
+            View_progressBar.setValue((COUNT/len(os.listdir(xml_dir)))*100)
+            time.sleep(0.01)
+
+    time.sleep(1)
+    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+    time.sleep(0.5)
+    View_progressBar.setValue(0) 
+
+def convert_voc_to_xml(src_img_dir, src_voc_dir, src_xml_dir, classes, View_progressBar):
+    COUNT = 0 #统计次数
+    print(f'图片路径{src_img_dir}->标签路径{src_voc_dir}->转后后存放的路径{src_xml_dir}')
+    print("开始转换")
+    #dest_xml_path = os.path.join(dest_folder, os.path.splitext(filename)[0] + '.xml')
+
     def convert_annotation(voc_path, image_id):
-        logging.info(f"已转换:{image_id}")
+        
         in_file = open(voc_path + '/%s.xml' % (image_id), 'rb')
         # 解析xml文件
         tree = ET.parse(in_file)
@@ -387,10 +439,12 @@ def convert_voc_to_xml(src_img_dir, src_txt_dir, src_xml_dir, classes):
 
     for img in img_names:
         img_path = src_img_dir + '/' + img + '.jpg'
+        src_xml_path = os.path.join(src_voc_dir, img + '.xml')
+        dest_xml_path = os.path.join(src_xml_dir, img + '.xml')
         im = Image.open(img_path)
         width, height = im.size
 
-        gt, cls_id = convert_annotation(src_txt_dir, img)
+        gt, cls_id = convert_annotation(src_voc_dir, img)
 
         xml_file = open((src_xml_dir + '/' + img + '.xml'), 'w')
         xml_file.write('<?xml version="1.0" ?>\n')
@@ -422,8 +476,19 @@ def convert_voc_to_xml(src_img_dir, src_txt_dir, src_xml_dir, classes):
         xml_file.write('        <depth>3</depth>\n')
         xml_file.write('    </size>\n')
         xml_file.write('</doc>')
+
+        
+
+        print(f"{src_xml_path}转化为{dest_xml_path}")
+        COUNT += 1
+        View_progressBar.setValue((COUNT/len(os.listdir(src_voc_dir)))*100)
     
-        time.sleep(0.08)
+        time.sleep(0.01)
+
+    time.sleep(1)
+    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+    time.sleep(0.5)
+    View_progressBar.setValue(0) 
 
 
 
@@ -442,14 +507,22 @@ def xml_to_txt_batch(folder_path, txt_output_path, image_path, class_label, View
             image_filename = os.path.splitext(filename)[0] + '.jpg'
             image_file_path = os.path.join(image_path, image_filename)
             txt_output_file = os.path.join(txt_output_path, os.path.splitext(filename)[0] + '.txt')
-            # print(xml_file)
-            # print(image_file_path)
-            # print(txt_output_file)
+
+            if is_file_empty(xml_file) == True:
+                print(f"{xml_file}数据为空")
+                time.sleep(0.5) 
+                QtWidgets.QMessageBox.information(None, "通知", f"{xml_file}数据为空,请删除后再执行操作")
+                time.sleep(0.5) 
+                return 0
+
             tree = ET.parse(xml_file)
             root = tree.getroot()
             image = Image.open(image_file_path)
             image_width, image_height = image.size
-            print(txt_output_file)
+
+
+
+
             with open(txt_output_file, 'w') as f:
                 for item in root.findall('outputs/object/item'):
                     name = item.find('name').text
@@ -466,10 +539,13 @@ def xml_to_txt_batch(folder_path, txt_output_path, image_path, class_label, View
 
                     line = f"{class_id} {x_center} {y_center} {width} {height}"
                     f.write(line + '\n')
+            print(f"{xml_file}转化为{txt_output_file}")
             COUNT += 1
             View_progressBar.setValue((COUNT/len(os.listdir(folder_path)))*100)
-            time.sleep(0.008)
+            time.sleep(0.01)
+    time.sleep(1)
     QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+    time.sleep(0.5)
     View_progressBar.setValue(0) 
 
                     
@@ -485,7 +561,12 @@ def convert_xml_to_voc_batch(xml_folder, dest_folder, image_path, class_labels, 
         if filename.endswith('.xml'):
             xml_file_path = os.path.join(xml_folder, filename)
             dest_xml_path = os.path.join(dest_folder, os.path.splitext(filename)[0] + '.xml')
-            
+            if is_file_empty(xml_file_path) == True:
+                print(f"{xml_file_path}数据为空")
+                time.sleep(0.5) 
+                QtWidgets.QMessageBox.information(None, "通知", f"{xml_file_path}数据为空,请删除后再执行操作")
+                time.sleep(0.5) 
+                return 0
             tree = ET.parse(xml_file_path)
             root = tree.getroot()
 
@@ -567,9 +648,11 @@ def convert_xml_to_voc_batch(xml_folder, dest_folder, image_path, class_labels, 
             dom = minidom.parse(dest_xml_path)
             with open(dest_xml_path, 'w') as f:
                 dom.writexml(f, addindent='', newl='\n')
-            print(dest_xml_path)
+            print(f"{xml_file_path}转化为{dest_xml_path}")
             COUNT += 1
             View_progressBar.setValue((COUNT/len(os.listdir(xml_folder)))*100)
-            time.sleep(0.008)
+            time.sleep(0.01)
+    time.sleep(1)
     QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+    time.sleep(0.5)
     View_progressBar.setValue(0) 
