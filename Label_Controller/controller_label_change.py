@@ -197,5 +197,5 @@ class Controller:
         self.model.thread_flag = 1  #启动线程工作
 
 
-        #self.view.zh_pushButton.setEnabled(True)
+        self.view.zh_pushButton.setEnabled(True)
 
