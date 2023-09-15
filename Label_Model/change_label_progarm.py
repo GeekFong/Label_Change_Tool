@@ -118,6 +118,20 @@ class Xml_make(object):
         tree.write(list_top[0], encoding='utf-8', xml_declaration=True)
         
 
+
+def printChangeInfo(pic_path, label_path, out_path):
+    print(f'图片路径{pic_path}->标签路径{label_path}->转后后存放的路径{out_path}')
+    print("开始转换")
+
+
+def show_conversion_complete_message(View_progressBar):
+    time.sleep(0.5)
+    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+    time.sleep(0.5)
+    View_progressBar.setValue(0)
+
+
+
 #检测文件夹内容是否为空
 def is_file_empty(filename):
     # 获取文件的完整路径
@@ -128,17 +142,20 @@ def is_file_empty(filename):
     
     return file_size == 0
 
+
+
+
+
+
+
 def txt_2_voc(source_path, xml_save_dir, txt_dir, class_type, View_progressBar):
 
     COUNT = 0 #统计次数
-    print(f'图片路径{source_path}->标签路径{txt_dir}->转后后存放的路径{xml_save_dir}')
-    print("开始转换")
+    printChangeInfo(source_path, txt_dir, xml_save_dir)
 
     try:
         for folder_path_tuple, folder_name_list, file_name_list in os.walk(source_path):
             for file_name in file_name_list:
-
-
                 file_suffix = os.path.splitext(file_name)[-1]
                 if file_suffix != '.jpg':
                     continue
@@ -186,21 +203,21 @@ def txt_2_voc(source_path, xml_save_dir, txt_dir, class_type, View_progressBar):
                                         str(xmin), str(ymin), str(xmax), str(ymax)])
                 Xml_make().txt_to_xml(list_top, list_bndbox)
                 COUNT += 1
-                View_progressBar.setValue((COUNT/len(file_name_list))*100)
+                View_progressBar.setValue(int((COUNT/len(file_name_list))*100))
                 print(f'{os.path.basename(txt_path)}转化为{os.path.basename(xml_save_path)}')
-
-                time.sleep(0.01)    
-        QtWidgets.QMessageBox.information(None, "通知", "转换完成")
-        View_progressBar.setValue(0)                     
+                time.sleep(0.02)                 
     except Exception as e:
         print(e)
+
+    show_conversion_complete_message(View_progressBar) 
+
 
 
 def txt_to_xml(folder_path, xml_output_path, image_path, class_label, View_progressBar):
 
     COUNT = 0 #统计次数
-    print(f'图片路径{image_path}->标签路径{folder_path}->转后后存放的路径{xml_output_path}')
-    print("开始转换")
+    printChangeInfo(image_path, folder_path, xml_output_path)
+
 
     if not os.path.exists(xml_output_path):
         os.makedirs(xml_output_path)
@@ -299,13 +316,10 @@ def txt_to_xml(folder_path, xml_output_path, image_path, class_label, View_progr
 
             #进度条
             COUNT += 1
-            View_progressBar.setValue((COUNT/len(os.listdir(folder_path)))*100)
-        time.sleep(0.01)
+            View_progressBar.setValue(int((COUNT/len(os.listdir(folder_path)))*100))
+        time.sleep(0.02)
 
-    time.sleep(1)
-    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
-    time.sleep(0.5)
-    View_progressBar.setValue(0) 
+    show_conversion_complete_message(View_progressBar) 
             
 
 def get_image_size(image_path):
@@ -332,7 +346,7 @@ def pascal_voc_to_yolov5(xml_path, txt_path, image_path, classes):
 
     tree = ET.parse(xml_path)
     root = tree.getroot()
-    with open(txt_path, 'w') as txt_file:
+    with open(txt_path, 'w',  encoding='utf-8') as txt_file:
         logging.info(txt_path)
         #time.sleep(0.1)
         for obj in root.findall('object'):
@@ -356,8 +370,8 @@ def pascal_voc_to_yolov5(xml_path, txt_path, image_path, classes):
 def convert_voc_to_yolov5(xml_dir, txt_dir, image_dir, classes, View_progressBar):
 
     COUNT = 0 #统计次数
-    print(f'图片路径{image_dir}->标签路径{xml_dir}->转后后存放的路径{txt_dir}')
-    print("开始转换")
+    printChangeInfo(image_dir, xml_dir, txt_dir)
+
 
     # 创建保存txt文件的目录
     os.makedirs(txt_dir, exist_ok=True)
@@ -381,19 +395,15 @@ def convert_voc_to_yolov5(xml_dir, txt_dir, image_dir, classes, View_progressBar
 
             print(f"{xml_path}转化为{txt_filename}")
             COUNT += 1
-            View_progressBar.setValue((COUNT/len(os.listdir(xml_dir)))*100)
-            time.sleep(0.01)
+            View_progressBar.setValue(int((COUNT / len(os.listdir(xml_dir))) * 100))
+            time.sleep(0.02)
 
-    time.sleep(1)
-    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
-    time.sleep(0.5)
-    View_progressBar.setValue(0) 
+    show_conversion_complete_message(View_progressBar) 
 
 def convert_voc_to_xml(src_img_dir, src_voc_dir, src_xml_dir, classes, View_progressBar):
     COUNT = 0 #统计次数
-    print(f'图片路径{src_img_dir}->标签路径{src_voc_dir}->转后后存放的路径{src_xml_dir}')
-    print("开始转换")
-    #dest_xml_path = os.path.join(dest_folder, os.path.splitext(filename)[0] + '.xml')
+    printChangeInfo(src_img_dir, src_voc_dir, src_xml_dir)
+
 
     def convert_annotation(voc_path, image_id):
         
@@ -445,7 +455,7 @@ def convert_voc_to_xml(src_img_dir, src_voc_dir, src_xml_dir, classes, View_prog
 
         gt, cls_id = convert_annotation(src_voc_dir, img)
 
-        xml_file = open((src_xml_dir + '/' + img + '.xml'), 'w')
+        xml_file = open((src_xml_dir + '/' + img + '.xml'), 'w', encoding='utf-8')
         xml_file.write('<?xml version="1.0" ?>\n')
         xml_file.write('<doc>\n')
         xml_file.write(f'<folder>{src_img_dir}</folder>\n')
@@ -457,6 +467,7 @@ def convert_voc_to_xml(src_img_dir, src_voc_dir, src_xml_dir, classes, View_prog
         count = 0
         for spt in gt:
             xml_file.write('            <item>\n')
+            #print({classes[int(cls_id[count])]})
             xml_file.write(f'                <name>{classes[int(cls_id[count])]}</name>\n')
             xml_file.write('                <bndbox>\n')
             xml_file.write('                    <xmin>' + spt[0] + '</xmin>\n')
@@ -480,22 +491,19 @@ def convert_voc_to_xml(src_img_dir, src_voc_dir, src_xml_dir, classes, View_prog
 
         print(f"{src_xml_path}转化为{dest_xml_path}")
         COUNT += 1
-        View_progressBar.setValue((COUNT/len(os.listdir(src_voc_dir)))*100)
-    
-        time.sleep(0.01)
+        View_progressBar.setValue(int((COUNT / len(os.listdir(src_voc_dir))) * 100))
 
-    time.sleep(1)
-    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
-    time.sleep(0.5)
-    View_progressBar.setValue(0) 
+    
+        time.sleep(0.02)
+
+    show_conversion_complete_message(View_progressBar) 
 
 
 
 def xml_to_txt_batch(folder_path, txt_output_path, image_path, class_label, View_progressBar):
 
     COUNT = 0 #统计次数
-    print(f'图片路径{image_path}->标签路径{folder_path}->转后后存放的路径{txt_output_path}')
-    print("开始转换")
+    printChangeInfo(image_path, folder_path, txt_output_path)
 
     if not os.path.exists(txt_output_path):
         os.makedirs(txt_output_path)
@@ -522,7 +530,7 @@ def xml_to_txt_batch(folder_path, txt_output_path, image_path, class_label, View
 
 
 
-            with open(txt_output_file, 'w') as f:
+            with open(txt_output_file, 'w', encoding='utf-8') as f:
                 for item in root.findall('outputs/object/item'):
                     name = item.find('name').text
                     xmin = int(item.find('bndbox/xmin').text)
@@ -540,19 +548,17 @@ def xml_to_txt_batch(folder_path, txt_output_path, image_path, class_label, View
                     f.write(line + '\n')
             print(f"{xml_file}转化为{txt_output_file}")
             COUNT += 1
-            View_progressBar.setValue((COUNT/len(os.listdir(folder_path)))*100)
-            time.sleep(0.01)
-    time.sleep(1)
-    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
-    time.sleep(0.5)
-    View_progressBar.setValue(0) 
+            View_progressBar.setValue(int((COUNT / len(os.listdir(folder_path))) * 100))
+            time.sleep(0.02)
+
+    show_conversion_complete_message(View_progressBar) 
 
                     
 def convert_xml_to_voc_batch(xml_folder, dest_folder, image_path, class_labels, View_progressBar):
 
     COUNT = 0 #统计次数
-    print(f'图片路径{image_path}->标签路径{xml_folder}->转后后存放的路径{dest_folder}')
-    print("开始转换")
+    printChangeInfo(image_path, xml_folder, dest_folder)
+
 
     os.makedirs(dest_folder, exist_ok=True)
 
@@ -645,13 +651,11 @@ def convert_xml_to_voc_batch(xml_folder, dest_folder, image_path, class_labels, 
             #logging.info(dest_xml_path)
             # 使用minidom重新解析XML文件并设置格式为一行行
             dom = minidom.parse(dest_xml_path)
-            with open(dest_xml_path, 'w') as f:
+            with open(dest_xml_path, 'w', encoding='utf-8') as f:
                 dom.writexml(f, addindent='', newl='\n')
             print(f"{xml_file_path}转化为{dest_xml_path}")
             COUNT += 1
-            View_progressBar.setValue((COUNT/len(os.listdir(xml_folder)))*100)
-            time.sleep(0.01)
-    time.sleep(1)
-    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
-    time.sleep(0.5)
-    View_progressBar.setValue(0) 
+            View_progressBar.setValue(int((COUNT / len(os.listdir(xml_folder))) * 100))
+            time.sleep(0.02)
+
+    show_conversion_complete_message(View_progressBar) 
