@@ -87,7 +87,7 @@ class Model:
         if not os.path.exists(self.wrong_files):
             os.makedirs(self.wrong_files)
 
-
+        print(self.wrong_files)
         # 获取文件夹1中的文件名集合（不包括后缀）
         filenames1 = {
             os.path.splitext(filename)[0] for filename in os.listdir(pic_folder_path)
@@ -107,17 +107,17 @@ class Model:
         # 移动文件夹1中不同的文件到目标文件夹
         for filename in different_filenames1:
             file_path = os.path.join(pic_folder_path, f"{filename}.jpg")
-            destination_path = os.path.join(self.wrong_files, f"\{filename}.jpg")
+            destination_path = os.path.join(self.wrong_files, f"{filename}.jpg")
             print(destination_path)
             shutil.move(file_path, destination_path)
-            print(f"Moved file from {pic_folder_path} to {self.wrong_files}: {filename}")
+            print(f"Moved file from {pic_folder_path} to {destination_path}")
 
         # 移动文件夹2中不同的文件到目标文件夹
         for filename in different_filenames2:
             file_path = os.path.join(label_folder_path, f"{filename}.{type}")
-            destination_path = os.path.join(self.wrong_files, f"\{filename}.{type}")
+            destination_path = os.path.join(self.wrong_files, f"{filename}.{type}")
             shutil.move(file_path, destination_path)
-            print(f"Moved file from {label_folder_path} to {self.wrong_files}: {filename}")
+            print(f"Moved file from {label_folder_path} to {destination_path}")
         
         self.file_cnt = self.file_cnt + 1
 
