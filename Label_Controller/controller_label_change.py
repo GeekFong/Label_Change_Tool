@@ -23,14 +23,14 @@ class ChangeLabel_Thread(QThread):
                 #print(rtv)
                 if rtv is None:
                     self.CGl_model.thread_flag = 0
+                    self.CGl_view.zh_pushButton.setEnabled(True)
                     QtWidgets.QMessageBox.warning(None, "警告", "未知错误")
 
+                self.CGl_view.zh_pushButton.setEnabled(True)
 
                 self.CGl_model.thread_flag = 0
 
             time.sleep(1)
-
-
 
 
 
@@ -197,5 +197,5 @@ class Controller:
         self.model.thread_flag = 1  #启动线程工作
 
 
-        self.view.zh_pushButton.setEnabled(True)
+        
 

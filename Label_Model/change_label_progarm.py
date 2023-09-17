@@ -11,6 +11,7 @@ import glob
 from PyQt5 import QtWidgets
 from logger.logging_utils import text_writer
 
+
 class Xml_make(object):
     def __init__(self):
         super().__init__()
@@ -125,10 +126,11 @@ def printChangeInfo(pic_path, label_path, out_path):
 
 
 def show_conversion_complete_message(View_progressBar):
-    time.sleep(0.5)
-    QtWidgets.QMessageBox.information(None, "通知", "转换完成")
-    time.sleep(0.5)
+    time.sleep(0.1)
+    #QtWidgets.QMessageBox.information(None, "通知", "转换完成")
+    time.sleep(0.1)
     View_progressBar.setValue(0)
+    time.sleep(0.1)
 
 
 
