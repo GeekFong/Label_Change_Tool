@@ -6,6 +6,40 @@ from PIL import Image
 import time
 from Label_Model import change_label_progarm
 from logger.logging_utils import text_writer
+import os
+import shutil
+
+
+#支持大小写。如果图片后缀为jpeg全部改为jpg
+def process_image_files(folder_path):
+    if not os.path.exists(folder_path):
+        print(f"文件夹 {folder_path} 不存在")
+        return -1
+
+    for root, dirs, files in os.walk(folder_path):
+        for filename in files:
+            # 获取文件的完整路径
+            file_path = os.path.join(root, filename)
+
+            # 检查文件扩展名是否为大写
+            if filename.lower().endswith(('.jpeg', '.jpg')):
+                # 构建新文件名，将所有大写字母转换为小写，扩展名改为"jpg"
+                new_filename = filename.lower()
+                new_filename = new_filename.replace('.jpeg', '.jpg')
+                new_filename = new_filename.replace('.jpg', '.jpg')
+                
+                # 构建新文件的完整路径
+                new_file_path = os.path.join(root, new_filename)
+
+                # 重命名文件
+                os.rename(file_path, new_file_path)
+
+                print(f"已将文件 {filename} 重命名为 {new_filename}")
+            else:
+                print(f"文件 {filename} 不是jpeg或jpg格式，操作失败")
+                return -1
+
+    return 0
 
 # 创建模型
 class Model:
@@ -198,12 +232,17 @@ class Model:
 
 
     def change_label(self, selected_option1, selected_option2, class_type, images_path, lab_path, custom_folder, View_progressBar):
+        # 检查图片的类型
+        if process_image_files(images_path) == -1:
+            print("图片类型错误")
+            return -1
+
+
         # 调用相应的处理函数
         try:
             if (selected_option1, selected_option2) in self.option_map:
                 processing_function = self.option_map[(selected_option1, selected_option2)]
                 print(f'开始解析文件 —— 解析的文件放到{custom_folder}/{selected_option1}To{selected_option2}')
-                print("开始转换 voc标签变为xml标签")
                 print(f"标签种类为{class_type}")
                 print("请确保标签的位置和数量正确，程序中无法确认你的标签名字和数量是否对应")
                         # 检查文件夹是否已存在，不存在则创建

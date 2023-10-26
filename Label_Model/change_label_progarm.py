@@ -402,6 +402,7 @@ def convert_voc_to_yolov5(xml_dir, txt_dir, image_dir, classes, View_progressBar
 
     show_conversion_complete_message(View_progressBar) 
 
+
 def convert_voc_to_xml(src_img_dir, src_voc_dir, src_xml_dir, classes, View_progressBar):
     COUNT = 0 #统计次数
     printChangeInfo(src_img_dir, src_voc_dir, src_xml_dir)
