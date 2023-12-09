@@ -334,11 +334,11 @@ def convert_coordinates(size, box):
     image_width, image_height = size[0], size[1]
     x_min, y_min, x_max, y_max = box[0], box[1], box[2], box[3]
 
-    # 归一化处理
-    x = (x_min + x_max) / (2.0 * image_width)
-    y = (y_min + y_max) / (2.0 * image_height)
-    w = (x_max - x_min) / image_width
-    h = (y_max - y_min) / image_height
+    # 归一化处理,只获取6位有效小数，不然linux下学习精度降低
+    x = round((x_min + x_max) / (2.0 * image_width), 6)
+    y = round((y_min + y_max) / (2.0 * image_height), 6)
+    w = round((x_max - x_min) / image_width, 6)
+    h = round((y_max - y_min) / image_height, 6)
 
     return x, y, w, h
 
@@ -542,10 +542,10 @@ def xml_to_txt_batch(folder_path, txt_output_path, image_path, class_label, View
                     ymax = int(item.find('bndbox/ymax').text)
 
                     class_id = class_label.index(name)
-                    x_center = (xmin + xmax) / 2 / image_width
-                    y_center = (ymin + ymax) / 2 / image_height
-                    width = (xmax - xmin) / image_width
-                    height = (ymax - ymin) / image_height
+                    x_center = round((xmin + xmax) / (2.0 * image_width), 6)
+                    y_center = round((ymin + ymax) / (2.0 * image_height), 6)
+                    width = round((xmax - xmin) / image_width, 6)
+                    height = round((ymax - ymin) / image_height, 6)
 
                     line = f"{class_id} {x_center} {y_center} {width} {height}"
                     f.write(line + '\n')

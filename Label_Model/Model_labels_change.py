@@ -41,6 +41,23 @@ def process_image_files(folder_path):
 
     return 0
 
+def convert_filenames_to_lowercase(directory):
+    # 遍历指定路径下的所有文件
+    for filename in os.listdir(directory):
+        # 构建完整的文件路径
+        file_path = os.path.join(directory, filename)
+        
+        # 如果是文件而不是目录
+        if os.path.isfile(file_path):
+            # 将文件名改为小写
+            new_filename = filename.lower()
+            new_file_path = os.path.join(directory, new_filename)
+            
+            # 修改文件名
+            os.rename(file_path, new_file_path)
+            print(f'Renamed: {filename} -> {new_filename}')
+
+
 # 创建模型
 class Model:
     def __init__(self):
@@ -99,10 +116,21 @@ class Model:
 
     #每次启动删除文件夹下的所有文件
     def delete_files_in_folder(self, folder_path):
-        #print(folder_path)
+        print(folder_path)
+        # 文件不存在，创建文件
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
+        # 遍历指定路径下的所有文件
+        for filename in os.listdir(folder_path):
+            # 构建完整的文件路径
+            file_path = os.path.join(folder_path, filename)
+            
+            # 如果是文件而不是目录
+            if os.path.isfile(file_path):
+                # 删除文件
+                os.remove(file_path)
+                print(f'Removed: {filename}')
 
 
     #计算文件夹下有多少文件
@@ -230,13 +258,15 @@ class Model:
         except FileNotFoundError:
             return -1
 
-
+    
     def change_label(self, selected_option1, selected_option2, class_type, images_path, lab_path, custom_folder, View_progressBar):
         # 检查图片的类型
         if process_image_files(images_path) == -1:
             print("图片类型错误")
             return -1
 
+        # 检查标注文件名字，同样全部改为小写
+        convert_filenames_to_lowercase(lab_path)
 
         # 调用相应的处理函数
         try:
